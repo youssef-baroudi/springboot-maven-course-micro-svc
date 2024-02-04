@@ -40,8 +40,8 @@
                         <artifactId>snyk-maven-plugin</artifactId>
                         <version>2.2.0</version>
                         <inherited>false</inherited>
-				  <org>devopscloudtechstart</org>
                        <configuration>
+			       				  <org>devopscloudtechstart</org>
 		</configuration>
     </plugin>
 		</plugins>
