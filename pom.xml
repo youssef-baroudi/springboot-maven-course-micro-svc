@@ -41,7 +41,6 @@
                         <version>2.2.0</version>
                         <inherited>false</inherited>
                        <configuration>
-			       				  <org>devopscloudtechstart</org>
 		</configuration>
     </plugin>
 		</plugins>
