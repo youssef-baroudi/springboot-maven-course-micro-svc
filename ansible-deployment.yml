@@ -1,9 +1,0 @@
----
-- hosts: cd-servers
-  tasks:
-    - name: Establish connection to dockerhub
-      shell: docker login -u youssef.baroudi@gmail.com -p Hakima123  https://index.docker.io/v1/
-    - name: Pull the image from Docker Hub to the cd-server1
-      shell: docker pull 1youssefbaroudi1/pringboot-maven:30
-    - name: Run the container using the docker image
-      shell: docker run --name=springbootcontainer -p 8080:8080 -detach 1youssefbaroudi1/pringboot-maven:30
