@@ -98,7 +98,7 @@
           {
               steps 
               {
-                  ansiblePlaybook playbook: '/etc/ansible/ansible-deployment.yml'
+                  ansiblePlaybook playbook: '/etc/ansible/ansible-deployment-docker.yml'
               }
           }*/
           stage('Execute Ansible playbook in production using k8') 
