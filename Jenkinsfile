@@ -1,21 +1,115 @@
-pipeline{
-    tools { 
-        maven 'maven-3.8.1' 
-       
-    }
-    agent {
-        label 'master'
-        }
-        stages{
-            stage('git stage'){
-                steps{
-                    git branch: 'main', url: 'https://github.com/cloudtechmasters/springboot-maven-course-micro-svc.git'
-                }
+  pipeline {
+      //agent any 
+      agent
+      {
+          label 'node1'
+      }
+      environment 
+      {
+          registry = 'https://hub.docker.com/repositories/1youssefbaroudi1'
+          registryCredential = 'jenkins-dockerhub-login-credentials'
+          dockerimage = ''
+      }
+      stages
+      {
+          stage("Checkout the project") 
+          {
+            steps{
+                git branch: 'master', url: 'https://github.com/youssef-baroudi/springboot-maven-course-micro-svc.git'
+            } 
+          }
+          stage("Build the package")
+          {
+              steps 
+              {
+                  sh 'mvn clean package'
+              }
+          }
+          stage("Sonar Quality Check")
+          {
+          steps
+              {
+                  script
+                      {
+                          withSonarQubeEnv(installationName: '10.4.0-community', credentialsId: 'sonarqube-jenkins-token') 
+                          {
+                              sh 'mvn sonar:sonar'
+                          }
+                          timeout(time: 1, unit: 'HOURS') 
+                          {
+                                  def qg = waitForQualityGate()
+                                  if (qg.status != 'OK') 
+                                      {
+                                          error "Pipeline aborted due to quality gate failure: ${qg.status}"
+                                      }
+                          }
+                      }
+                  }
+          }
+          stage('Building the Image') 
+        {
+              steps 
+          {
+                  script 
+            {
+              //dockerImage = docker.build registry + ":$BUILD_NUMBER"
+              dockerImage = docker.build "1youssefbaroudi1/pringboot-maven:$BUILD_NUMBER"
             }
-            stage('build maven project '){
-                steps{
-                   sh 'mvn clean package'
-                }
-            }
-        }
-}
+          }
+          }
+          stage ('Deploy the Image to yb docker hub') 
+          {
+              steps 
+              {
+                  script 
+                  {
+                      docker.withRegistry( '', registryCredential )
+                      {
+                          dockerImage.push()
+                      }
+                  }
+              }
+          }
+          stage('Cleaning up') 
+          {
+              steps
+              {
+                  sh "docker rmi 1youssefbaroudi1/pringboot-maven:$BUILD_NUMBER"
+              }
+          }
+          /*stage('Deploy to cd-server and run the container') => do not work
+          {
+              steps
+              {
+                  ansiblePlaybook credentialsId: 'private-key-to-cd-server', installation: 'ansible', inventory: '/etc/ansible/hosts', playbook: '/etc/ansible/ansible-deployment.yml', vaultTmpPath: ''
+              }    
+          }
+          stage('Deploy to cd-server and run the container using ssh') => do not work
+          {
+              steps 
+              {
+                  script
+                  {
+                      sh "sudo ansible-playbook /etc/ansible/ansible-deployment.yml"
+                  }
+              }
+          }
+          stage('Execute Ansible playbook in production using only docker') => work fine
+          {
+              steps 
+              {
+                  ansiblePlaybook playbook: '/etc/ansible/ansible-deployment-docker.yml'
+              }
+          }*/
+          stage('Execute Ansible playbook in production using k8') 
+          {
+              steps 
+              {
+                sh "echo 'youssef baroudi'"
+                sh "pwd"
+                sh "sed -i 's,Image_BuildNumber,$BUILD_NUMBER,g' springboot-deployment.yml"
+                ansiblePlaybook playbook: 'ansible-deployment.using-k8.yml'
+              }
+          }
+      }
+  }
